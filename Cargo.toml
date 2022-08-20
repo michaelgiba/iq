@@ -1,0 +1,9 @@
+[package]
+name = "iq"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+structopt = "0.3.21"
+anyhow = "1.0"

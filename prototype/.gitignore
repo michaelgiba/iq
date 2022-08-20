@@ -1,0 +1,3 @@
+**/*.pyc
+.mypy_cache/**/*
+venv/**/*

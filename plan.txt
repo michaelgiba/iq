@@ -1,0 +1,69 @@
+Target usage:
+
+iq img.{png|jpeg} "<program>"
+
+
+grammar:
+
+    program := (<expr>;)
+    expr := <ctx_expr> (| <operator>)*
+
+    // Context
+    ctx_expr := <selector_pixel_ctx>?.
+    selector_pixel_ctx := [<selector_slice_expr>?] 
+    selector_slice_expr := <selector_slice_range> | <selector_slice_range>,<selector_slice_range>
+    selector_slice_range := <selector_slice_bound>?:<selector_slice_bound>?
+    selector_slice_bound := <scalar>
+
+    // Scalars
+    scalar := <integer> | <selector_scalar> | <current_pixel_scalar> | <scalar_expr>
+    integer := [0-9]+
+
+    selector_scalar := <selector_pixel_ctx><ctx_scalar_attribute>
+    selector_scalar_attr := ".w" | ".h"
+
+    current_pixel_scalar := <current_pixel><current_pixel_attr>
+    current_pixel := "_"
+    cuurent_pixel_attr := ".x" | ".y" | ".r" | ".g" | ".b"  
+
+    scalar_expr := (<scalar_expr>) | <scalar> | <scalar_unary_operator><scalar> | <scalar><scalar_binary_operator><scalar>
+    scalar_unary_operator := "+" | '-'
+    scalar_binary_operator := "+" | '/' | '*' | '-'
+
+    // Operators
+    operator_expr := <pixel_unary_operator> | <pixel_match_expr>
+    pixel_unary_operator := "~"
+
+    pixel_match_expr := "_ (<pixel_match_operator> <color>)? => <pixel_match_return_val>"
+    pixel_match_operator := "<=" | ">=" | ">" | "<" | "=="
+    pixel_match_return_val := <current_pixel> | <color> 
+
+end 
+
+Example Programs
+================================
+1. Do nothing
+""
+2. Do nothing
+"."
+3. Change all pixels to red
+". | _ => c(255, 0, 0)"
+
+4. Change a square of pixels to red
+"[10:20, 10:20]. | _ => c(255, 0, 0)"
+
+5. Only leave red channel in tact
+". | _ => c(_.r, _.x, _.y)"
+
+6. Make a blue square in the center of the image 
+"[([].h / 2 - 10) : ([].h / 2 + 10), ([].w / 2 - 10) : ([].w / 2 + 10)] | _ => c(255, 0, 0)"
+
+
+Parsing Algorithm
+================================
+1. lexer(String) -> Tokens; 
+2. parser(Tokens) -> Tree 
+3. evaluator(Inputs, Tree) -> Layers
+4. Layering(Layers) -> Image
+5. Trimming(Image) -> Image
+================================
