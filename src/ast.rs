@@ -38,9 +38,15 @@ pub struct ColorNode {
     pub b_expr: ScalarExprNode,
 }
 
+pub struct PixelNode {
+    y_expr: ScalarExprNode,
+    x_expr: ScalarExprNode,
+    color_node: ColorNode,
+}
+
 pub struct MatchComparatorNode {
     pub op_type: MatchOpType,
-    pub comp_val: ColorNode,
+    pub comp_val: PixelNode,
 }
 
 pub struct PixelMatchExprOpNode {

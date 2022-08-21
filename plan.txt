@@ -33,11 +33,13 @@ grammar:
     operator_expr := <pixel_unary_operator> | <pixel_match_expr>
     pixel_unary_operator := "~"
 
-    pixel_match_expr := "_ (<pixel_match_operator> <color>)? => <pixel_match_return_val>"
+    pixel_match_expr := "_ (<pixel_match_operator> <pixel>)? => <pixel_match_return_val>"
     pixel_match_operator := "<=" | ">=" | ">" | "<" | "==" | "!="
     pixel_match_return_val := <current_pixel> | <color> 
 
     color := c(<scalar_expr>, <scalar_expr>, <scalar_expr>)
+    pixel := p(<scalar_expr>, <scalar_expr>, <color>)
+
 
 end 
 
