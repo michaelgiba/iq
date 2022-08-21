@@ -1,18 +1,17 @@
 use std::fmt::{Debug, Error};
-use std::option::{Option};
-
+use std::option::Option;
 
 pub struct AttrAccessNode {
-    key: char
+    key: char,
 }
 
 pub struct SelectorScalarNode {
     pub select_ctx: SelectorCtxNode,
-    pub accessed_attr: AttrAccessNode 
+    pub accessed_attr: AttrAccessNode,
 }
 
 pub enum ScalarNode {
-    Number(f64), 
+    Number(f64),
     SelectorScalar(SelectorScalarNode),
     CurrentPixelScalar(AttrAccessNode),
 }
@@ -54,16 +53,15 @@ pub enum OperatorNode {
     PixelMatchExprOp(PixelMatchExprOpNode),
 }
 
-
 pub struct BinaryScalarOpNode {
     pub lhs: ScalarExprNode,
     pub op: BinaryOpType,
     pub rhs: ScalarExprNode,
-} 
+}
 
 pub enum ScalarExprNode {
     SubExpr(Box<ScalarExprNode>),
-    Scalar(ScalarNode), 
+    Scalar(ScalarNode),
     BinaryOp(Box<BinaryScalarOpNode>),
 }
 
@@ -81,7 +79,6 @@ pub struct ExprNode<'a> {
     pub selector_ctx: Option<SelectorCtxNode>,
     pub op_nodes: &'a Vec<OperatorNode>,
 }
-
 
 pub struct IqRootNode<'a> {
     pub exprs: &'a Vec<ExprNode<'a>>,
