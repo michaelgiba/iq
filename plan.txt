@@ -6,18 +6,18 @@ iq img.{png|jpeg} "<program>"
 grammar:
 
     program := (<expr>;)
-    expr := <ctx_expr> (| <operator>)*
+    expr := <ctx_expr> (| <operator_expr>)*
 
     // Context
     ctx_expr := <selector_pixel_ctx>?.
     selector_pixel_ctx := [<selector_slice_expr>?] 
     selector_slice_expr := <selector_slice_range> | <selector_slice_range>,<selector_slice_range>
     selector_slice_range := <selector_slice_bound>?:<selector_slice_bound>?
-    selector_slice_bound := <scalar>
+    selector_slice_bound := <scalar_expr>
 
     // Scalars
-    scalar := <integer> | <selector_scalar> | <current_pixel_scalar> | <scalar_expr>
-    integer := [0-9]+
+    scalar := <number> | <selector_scalar> | <current_pixel_scalar>
+    number := [0-9]+(.[0-9]+)
 
     selector_scalar := <selector_pixel_ctx><ctx_scalar_attribute>
     selector_scalar_attr := ".w" | ".h"
@@ -26,8 +26,7 @@ grammar:
     current_pixel := "_"
     cuurent_pixel_attr := ".x" | ".y" | ".r" | ".g" | ".b"  
 
-    scalar_expr := (<scalar_expr>) | <scalar> | <scalar_unary_operator><scalar> | <scalar><scalar_binary_operator><scalar>
-    scalar_unary_operator := "+" | '-'
+    scalar_expr := (<scalar_expr>) | <scalar> | <scalar_expr><scalar_binary_operator><scalar_expr>
     scalar_binary_operator := "+" | '/' | '*' | '-'
 
     // Operators
@@ -35,8 +34,10 @@ grammar:
     pixel_unary_operator := "~"
 
     pixel_match_expr := "_ (<pixel_match_operator> <color>)? => <pixel_match_return_val>"
-    pixel_match_operator := "<=" | ">=" | ">" | "<" | "=="
+    pixel_match_operator := "<=" | ">=" | ">" | "<" | "==" | "!="
     pixel_match_return_val := <current_pixel> | <color> 
+
+    color := c(<scalar_expr>, <scalar_expr>, <scalar_expr>)
 
 end 
 

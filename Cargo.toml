@@ -3,7 +3,12 @@ name = "iq"
 version = "0.1.0"
 edition = "2021"
 
+[build-dependencies.lalrpop]
+version = "0.19.8"
+features = ["lexer"]
 
 [dependencies]
 structopt = "0.3.21"
 anyhow = "1.0"
+lalrpop-util = { version = "0.19.8", features = ["lexer"] }
+regex = "1"
