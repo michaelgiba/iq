@@ -15,7 +15,7 @@ impl Evalulate<BasicContext> for IqAstRootNode {
 
         BasicContext::from_contexts(
             (*self.exprs)
-                .into_iter()
+                .iter()
                 .map(|expr| expr.eval(image_ctx))
                 .collect(),
         )
@@ -78,14 +78,14 @@ impl Evalulate<(Option<u32>, Option<u32>)> for SliceRangeNode {
         let lower_bound = match &self.lower_bound {
             None => None,
             Some(lower_bound) => {
-                let floating_lower_bound: f64 = lower_bound.eval(image_ctx).first().clone();
+                let floating_lower_bound: f64 = *lower_bound.eval(image_ctx).first();
                 Some(floating_lower_bound.round() as u32)
             }
         };
         let upper_bound = match &self.upper_bound {
             None => None,
             Some(upper_bound) => {
-                let floating_upper_bound: f64 = upper_bound.eval(image_ctx).first().clone();
+                let floating_upper_bound: f64 = *upper_bound.eval(image_ctx).first();
                 Some(floating_upper_bound.round() as u32)
             }
         };
@@ -107,13 +107,13 @@ impl Evalulate<AnnotatedFloatContext> for ScalarExprNode {
 
 impl Evalulate<AnnotatedFloatContext> for ScalarFnCall {
     fn eval(&self, image_ctx: &BasicContext) -> AnnotatedFloatContext {
-        let mut evaluated_args = (*self.args).into_iter().map(|arg| arg.eval(image_ctx));
+        let mut evaluated_args = (*self.args).iter().map(|arg| arg.eval(image_ctx));
 
         match &self.op {
             ScalarFnOp::Min() => ops::min(&evaluated_args.collect()),
             ScalarFnOp::Max() => ops::max(&evaluated_args.collect()),
-            ScalarFnOp::Square() => ops::square(&evaluated_args.nth(0).unwrap()),
-            ScalarFnOp::Sqrt() => ops::sqrt(&evaluated_args.nth(0).unwrap()),
+            ScalarFnOp::Square() => ops::square(&evaluated_args.next().unwrap()),
+            ScalarFnOp::Sqrt() => ops::sqrt(&evaluated_args.next().unwrap()),
         }
     }
 }

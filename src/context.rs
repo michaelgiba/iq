@@ -1,12 +1,7 @@
 use image::RgbaImage;
 use std::cmp::{max, min, PartialOrd};
 use std::collections::HashMap;
-
 use std::path::Path;
-
-// use image::GenericImage;
-// use image::Pixels;
-// use image::Pixel;
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq, PartialOrd)]
 pub struct IqPixel {
@@ -66,8 +61,8 @@ impl<T> Context<T> {
         for y in 0..h {
             for x in 0..w {
                 ctx.insert(IqPixel {
-                    x: x,
-                    y: y,
+                    y,
+                    x,
                     c: [255, 255, 255, 255],
                 });
             }
@@ -89,7 +84,7 @@ impl<T> Context<T> {
         }
     }
 
-    pub fn write(&self, path: &str) -> () {
+    pub fn write(&self, path: &str) {
         let mut img = RgbaImage::new(self.height() + 1, self.width() + 1);
 
         for pixel in self.iter() {
@@ -105,8 +100,8 @@ impl<T> Context<T> {
 
         for (x, y, c) in img.enumerate_pixels() {
             out.insert(IqPixel {
-                x: x,
-                y: y,
+                y,
+                x,
                 c: [c[0], c[1], c[2], c[3]],
             })
         }

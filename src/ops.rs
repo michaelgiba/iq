@@ -29,14 +29,13 @@ fn min2(a: &AnnotatedFloatContext, b: &AnnotatedFloatContext) -> AnnotatedFloatC
 }
 
 pub fn min(args: &Vec<AnnotatedFloatContext>) -> AnnotatedFloatContext {
-    if args.len() == 0 {
+    if args.is_empty() {
         AnnotatedFloatContext::empty()
     } else {
-        args.into_iter()
+        args.iter()
             .cloned()
             .reduce(|accum, item| min2(&accum, &item))
             .unwrap()
-            .clone()
     }
 }
 
@@ -56,14 +55,13 @@ fn max2(a: &AnnotatedFloatContext, b: &AnnotatedFloatContext) -> AnnotatedFloatC
 }
 
 pub fn max(args: &Vec<AnnotatedFloatContext>) -> AnnotatedFloatContext {
-    if args.len() == 0 {
+    if args.is_empty() {
         AnnotatedFloatContext::empty()
     } else {
-        args.into_iter()
+        args.iter()
             .cloned()
             .reduce(|accum, item| max2(&accum, &item))
             .unwrap()
-            .clone()
     }
 }
 

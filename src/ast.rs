@@ -1,4 +1,4 @@
-use std::fmt::{Debug, Error};
+use std::fmt::Debug;
 use std::option::Option;
 
 #[derive(Debug, Clone)]

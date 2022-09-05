@@ -5,7 +5,7 @@ pub fn access_pixel_ctx_attr<T>(ctx: &Context<T>, attr: &String) -> AnnotatedPix
         let midpoint = ctx.midpoint();
 
         AnnotatedPixelContext::like(
-            &ctx,
+            ctx,
             &IqPixel {
                 x: midpoint.0,
                 y: midpoint.1,
@@ -15,32 +15,6 @@ pub fn access_pixel_ctx_attr<T>(ctx: &Context<T>, attr: &String) -> AnnotatedPix
     } else {
         panic!("Unknown attribute: {:?}", attr)
     }
-}
-
-pub fn access_scalar_ctx_attr(ctx: &BasicContext, attr: &String) -> AnnotatedFloatContext {
-    if attr.eq_ignore_ascii_case("y") {
-        let mut annotated_ctx = AnnotatedFloatContext::empty();
-        for pixel in ctx.iter() {
-            annotated_ctx.insert_with_annotation(pixel.clone(), pixel.y as f64)
-        }
-        return annotated_ctx;
-    } else if attr.eq_ignore_ascii_case("x") {
-        let mut annotated_ctx = AnnotatedFloatContext::empty();
-        for pixel in ctx.iter() {
-            annotated_ctx.insert_with_annotation(pixel.clone(), pixel.x as f64)
-        }
-        return annotated_ctx;
-    }
-    for (i, x) in ["r", "g", "b", "a"].iter().enumerate() {
-        if attr.eq_ignore_ascii_case(x) {
-            let mut annotated_ctx = AnnotatedFloatContext::empty();
-            for pixel in ctx.iter() {
-                annotated_ctx.insert_with_annotation(pixel.clone(), pixel.c[i] as f64)
-            }
-            return annotated_ctx;
-        }
-    }
-    panic!("Unknown attribute: {:?}", attr)
 }
 
 pub fn access_scalar_annotated_ctx_attr(

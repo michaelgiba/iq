@@ -5,7 +5,8 @@ use crate::eval::Evalulate;
 #[macro_use]
 extern crate lalrpop_util;
 
-lalrpop_mod!(pub iqparser);
+lalrpop_mod!(#[allow(clippy::all)] pub iqparser);
+
 mod ast;
 mod attrs;
 mod context;
@@ -16,7 +17,7 @@ fn main() {
     let root: IqAstRootNode = iqparser::IqRootParser::new()
         .parse(
             "
-            _ => p(_.y, _.x, _.r, (_.x / [].w) * 255, _.b)
+            [].h/2 >= sqrt(sq([].c.x - _.x) + sq([].c.y - _.y)) => p(_.y, _.x, _.r, (_.x / [].w) * 255, _.b);
         ",
         )
         .unwrap();
