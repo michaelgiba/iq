@@ -6,10 +6,9 @@ iq img.{png|jpeg} "<program>"
 grammar:
 
     program := (<expr>;)
-    expr := <ctx_expr> (| <operator_expr>)*
+    expr := selector_pixel_ctx (| <operator_expr>)*
 
     // Context
-    ctx_expr := <selector_pixel_ctx>?.
     selector_pixel_ctx := [<selector_slice_expr>?] 
     selector_slice_expr := <selector_slice_range> | <selector_slice_range>,<selector_slice_range>
     selector_slice_range := <selector_slice_bound>?:<selector_slice_bound>?
@@ -42,6 +41,8 @@ grammar:
 
 
 end 
+
+
 
 Example Programs
 ================================

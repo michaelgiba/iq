@@ -12,3 +12,4 @@ structopt = "0.3.21"
 anyhow = "1.0"
 lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 regex = "1"
+image = "0.24.3"

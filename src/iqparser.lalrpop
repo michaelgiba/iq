@@ -1,7 +1,232 @@
-use crate::ast::{Slice};
+use std::str::FromStr;
+use crate::ast::*;
+use std::boxed::Box;
 
 grammar;
 
-pub SliceExpr: Slice = {
-    "+" => Slice{ y_start: Some(0), y_end: Some(10), x_start: Some(0), x_end: Some(10) },
+
+pub IqRoot: IqAstRootNode = {
+    "" => IqAstRootNode { exprs: vec!() },
+    <e:Expr> => IqAstRootNode{ exprs: vec!(e) },
+    <e:(<Expr> ";")*> => IqAstRootNode{ exprs: e },
 };
+
+
+Expr: ExprNode = {
+    <SelectorCtx> => ExprNode { 
+        selector_ctx: Some(<>), 
+        op_nodes: vec!(), 
+    },
+    <Operator> => ExprNode { 
+        selector_ctx: None, 
+        op_nodes: vec!(<>), 
+    },
+    <s:SelectorCtx> <ops: ("|" <Operator>)+>  => ExprNode { 
+        selector_ctx: Some(s), 
+        op_nodes: ops, 
+    },    
+    <o:Operator> <ops: ("|" <Operator>)+>  => ExprNode { 
+        selector_ctx: None, 
+        op_nodes: vec!(o).into_iter().chain(ops.into_iter()).collect(), 
+    },
+};
+
+SelectorCtx: SelectorCtxNode = {
+    "[" "]" => SelectorCtxNode { y_slice_range: None, x_slice_range: None },
+    "[" <l:SelectorSliceExpr> "]" => SelectorCtxNode { 
+        y_slice_range: Some(l), x_slice_range: None 
+    },
+    "[" <l:SelectorSliceExpr> "," <r:SelectorSliceExpr> "]" => SelectorCtxNode { 
+        y_slice_range: Some(l), x_slice_range: Some(r) 
+    },    
+};
+
+SelectorSliceExpr: Box<SliceRangeNode> = {
+    ":" => Box::new(SliceRangeNode { 
+        lower_bound: None,
+        upper_bound: None,
+    }),
+    <ScalarExpr> ":" => Box::new(SliceRangeNode { 
+        lower_bound: Some(<>),
+        upper_bound: None,
+    }),
+    ":" <ScalarExpr> => Box::new(SliceRangeNode { 
+        lower_bound: None,
+        upper_bound: Some(<>),
+    }),
+    <l:ScalarExpr> ":" <r:ScalarExpr> => Box::new(SliceRangeNode { 
+        lower_bound: Some(l),
+        upper_bound: Some(r),
+    }),
+}
+
+
+Operator: OperatorNode = {
+    "~" => OperatorNode::UnaryNegationOp(),
+    MatchOperator,
+};
+
+MatchOperator: OperatorNode = {
+    <v:MatchComparisonValue> <c:(<MatchComparator>)?> "=>" <pixel:PixelExpr> => OperatorNode::MatchExprOp (
+        MatchExprOpNode {
+            match_value: v,
+            match_comparator_node: c,
+            match_return_value_node: Box::new(MatchReturnValue::Pixel(pixel)),
+        }
+    ),
+    <v:MatchComparisonValue> <c:(<MatchComparator>)?> "=>" "(" <o:Operator> ")" => OperatorNode::MatchExprOp (
+        MatchExprOpNode {
+            match_value: v,            
+            match_comparator_node: c,
+            match_return_value_node: Box::new(MatchReturnValue::Operator(o)),
+        }
+    ),    
+}
+
+MatchComparator: MatchComparatorNode = {
+    <o:MatchExprOp> <v:MatchComparisonValue> => MatchComparatorNode {
+        op_type: o, 
+        cmp_val: v,
+    },
+}
+
+MatchComparisonValue: MatchComparisonValue = {
+    <PixelExpr> => MatchComparisonValue::Pixel(<>),
+    <ScalarExpr> => MatchComparisonValue::Scalar(<>),
+}
+
+MatchExprOp: MatchOpType = {
+    "<=" => MatchOpType::Lte(),
+    ">=" => MatchOpType::Gte(),
+    ">" => MatchOpType::Gt(),
+    "<" => MatchOpType::Lt(),
+    "==" => MatchOpType::Eq(),
+    "!=" => MatchOpType::Neq(),
+};
+
+
+ExplicitPixel: PixelNode = {
+    "p(" 
+        <y:ScalarExpr> "," 
+        <x:ScalarExpr> "," 
+        <r:ScalarExpr> "," 
+        <g:ScalarExpr> "," 
+        <b:ScalarExpr> 
+        <a:("," <ScalarExpr>)?> 
+    ")" => PixelNode{
+        y_expr: y,
+        x_expr: x,
+        r_expr: r,
+        g_expr: g,
+        b_expr: b,
+        a_expr: a.unwrap_or(
+            ScalarExprNode::Scalar(
+                ScalarNode::Integer(255)
+            )
+        ),
+    },
+}
+
+PixelExpr: PixelExprType = {
+    "_" => PixelExprType::CurrentPixel(),
+    <s:SelectorCtx> ".c" => PixelExprType::SelectorPixel(s, AttrAccessNode{key: String::from("c")}),
+    <ExplicitPixel> => PixelExprType::Explicit(<>),
+}
+
+ScalarExpr: ScalarExprNode = {
+    <l:ScalarExpr> "+" <r:ScalarExprFactor> => ScalarExprNode::BinaryOp(
+        Box::new(
+            BinaryScalarOpNode{
+                lhs: l,
+                op: BinaryOpType::Add(),
+                rhs: r,
+            }
+        )
+    ),
+    <l:ScalarExpr> "-" <r:ScalarExprFactor> => ScalarExprNode::BinaryOp(
+        Box::new(
+            BinaryScalarOpNode{
+                lhs: l,
+                op: BinaryOpType::Sub(),
+                rhs: r,
+            }
+        )
+    ),   
+    ScalarExprFactor, 
+}
+
+ScalarExprFactor: ScalarExprNode = {
+    <l:ScalarExprFactor> "/" <r:ScalarExprTerm> => ScalarExprNode::BinaryOp(
+        Box::new(
+            BinaryScalarOpNode{
+                lhs: l,
+                op: BinaryOpType::Div(),
+                rhs: r,
+            }
+        )
+    ),
+    <l:ScalarExprFactor> "*" <r:ScalarExprTerm> => ScalarExprNode::BinaryOp(
+        Box::new(
+            BinaryScalarOpNode{
+                lhs: l,
+                op: BinaryOpType::Mul(),
+                rhs: r,
+            }
+        )
+    ),    
+    ScalarExprTerm,
+}
+
+
+ScalarExprTerm: ScalarExprNode = {
+    <Float> => ScalarExprNode::Scalar(<>),
+    <Integer> => ScalarExprNode::Scalar(<>),
+    <SelectorScalar> => ScalarExprNode::Scalar(<>),
+    <p:PixelExpr> "." <s:AttrAccess> => ScalarExprNode::Scalar(
+        ScalarNode::PixelScalar(Box::new(p), s)
+    ),
+    <ScalarFnCall> => ScalarExprNode::ScalarFn(<>), 
+    "(" <ScalarExpr> ")",
+}
+
+ScalarFnCall: ScalarFnCall = {
+    "min(" <l:ScalarExpr> "," <r:ScalarExpr> ")" => ScalarFnCall { 
+        op: ScalarFnOp::Min(),
+        args: vec!(l, r),
+    },
+    "max(" <l:ScalarExpr> "," <r:ScalarExpr> ")" => ScalarFnCall { 
+        op: ScalarFnOp::Max(),
+        args: vec!(l, r),
+    },
+    "sq(" <ScalarExpr> ")" => ScalarFnCall { 
+        op: ScalarFnOp::Square(),
+        args: vec!(<>),
+    },
+    "sqrt(" <ScalarExpr> ")" => ScalarFnCall { 
+        op: ScalarFnOp::Sqrt(),
+        args: vec!(<>),
+    },    
+}
+
+
+SelectorScalar: ScalarNode = {
+    <c:SelectorCtx> "." <a:AttrAccess> => ScalarNode::SelectorScalar(
+        SelectorScalarNode {
+            selector_ctx: c,
+            accessed_attr: a,
+        }
+    ),
+}
+
+AttrAccess: AttrAccessNode = {
+    r"[a-z]+" => AttrAccessNode { key : String::from(<>) },    
+}
+
+Float: ScalarNode = {
+    r"[0-9]+\.[0-9]+" => ScalarNode::Float(f64::from_str(<>).unwrap()),
+}
+
+Integer: ScalarNode = {
+    r"[0-9]+" => ScalarNode::Integer(u64::from_str(<>).unwrap()),
+};
+

@@ -1,28 +1,34 @@
 use std::fmt::{Debug, Error};
 use std::option::Option;
 
+#[derive(Debug, Clone)]
 pub struct AttrAccessNode {
-    key: char,
+    pub key: String,
 }
 
+#[derive(Debug, Clone)]
 pub struct SelectorScalarNode {
-    pub select_ctx: SelectorCtxNode,
+    pub selector_ctx: SelectorCtxNode,
     pub accessed_attr: AttrAccessNode,
 }
 
+#[derive(Debug, Clone)]
 pub enum ScalarNode {
-    Number(f64),
+    Float(f64),
+    Integer(u64),
     SelectorScalar(SelectorScalarNode),
-    CurrentPixelScalar(AttrAccessNode),
+    PixelScalar(Box<PixelExprType>, AttrAccessNode),
 }
 
+#[derive(Debug, Clone)]
 pub enum BinaryOpType {
     Add(),
-    Subtract(),
-    Divide(),
-    Multiply(),
+    Sub(),
+    Div(),
+    Mul(),
 }
 
+#[derive(Debug, Clone)]
 pub enum MatchOpType {
     Lt(),
     Lte(),
@@ -32,60 +38,102 @@ pub enum MatchOpType {
     Neq(),
 }
 
-pub struct ColorNode {
+#[derive(Debug, Clone)]
+pub struct PixelNode {
+    pub y_expr: ScalarExprNode,
+    pub x_expr: ScalarExprNode,
     pub r_expr: ScalarExprNode,
     pub g_expr: ScalarExprNode,
     pub b_expr: ScalarExprNode,
+    pub a_expr: ScalarExprNode,
 }
 
-pub struct PixelNode {
-    y_expr: ScalarExprNode,
-    x_expr: ScalarExprNode,
-    color_node: ColorNode,
+#[derive(Debug, Clone)]
+pub enum PixelExprType {
+    Explicit(PixelNode),
+    CurrentPixel(),
+    SelectorPixel(SelectorCtxNode, AttrAccessNode),
 }
 
+#[derive(Debug, Clone)]
+pub enum MatchComparisonValue {
+    Scalar(ScalarExprNode),
+    Pixel(PixelExprType),
+}
+
+#[derive(Debug, Clone)]
 pub struct MatchComparatorNode {
     pub op_type: MatchOpType,
-    pub comp_val: PixelNode,
+    pub cmp_val: MatchComparisonValue,
 }
 
-pub struct PixelMatchExprOpNode {
-    pub match_comparator_node: MatchComparatorNode,
-    pub match_return_value_node: ColorNode,
+#[derive(Debug, Clone)]
+pub enum MatchReturnValue {
+    Pixel(PixelExprType),
+    Operator(OperatorNode),
 }
 
+#[derive(Debug, Clone)]
+pub struct MatchExprOpNode {
+    pub match_value: MatchComparisonValue,
+    pub match_comparator_node: Option<MatchComparatorNode>,
+    pub match_return_value_node: Box<MatchReturnValue>,
+}
+
+#[derive(Debug, Clone)]
 pub enum OperatorNode {
     UnaryNegationOp(),
-    PixelMatchExprOp(PixelMatchExprOpNode),
+    MatchExprOp(MatchExprOpNode),
 }
 
+#[derive(Debug, Clone)]
 pub struct BinaryScalarOpNode {
     pub lhs: ScalarExprNode,
     pub op: BinaryOpType,
     pub rhs: ScalarExprNode,
 }
 
+#[derive(Debug, Clone)]
+pub enum ScalarFnOp {
+    Min(),
+    Max(),
+    Square(),
+    Sqrt(),
+}
+
+#[derive(Debug, Clone)]
+pub struct ScalarFnCall {
+    pub op: ScalarFnOp,
+    pub args: Vec<ScalarExprNode>,
+}
+
+#[derive(Debug, Clone)]
 pub enum ScalarExprNode {
+    ScalarFn(ScalarFnCall),
     SubExpr(Box<ScalarExprNode>),
     Scalar(ScalarNode),
     BinaryOp(Box<BinaryScalarOpNode>),
 }
 
+#[derive(Debug, Clone)]
 pub struct SliceRangeNode {
     pub lower_bound: Option<ScalarExprNode>,
     pub upper_bound: Option<ScalarExprNode>,
 }
 
+#[derive(Debug, Clone)]
 pub struct SelectorCtxNode {
     pub y_slice_range: Option<Box<SliceRangeNode>>,
     pub x_slice_range: Option<Box<SliceRangeNode>>,
 }
 
-pub struct ExprNode<'a> {
+#[derive(Debug, Clone)]
+pub struct ExprNode {
     pub selector_ctx: Option<SelectorCtxNode>,
-    pub op_nodes: &'a Vec<OperatorNode>,
+    pub op_nodes: Vec<OperatorNode>,
 }
 
-pub struct IqRootNode<'a> {
-    pub exprs: &'a Vec<ExprNode<'a>>,
+#[derive(Debug, Clone)]
+pub struct IqAstRootNode {
+    pub exprs: Vec<ExprNode>,
 }
