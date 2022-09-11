@@ -22,25 +22,22 @@ pub fn access_scalar_annotated_ctx_attr(
     attr: &String,
 ) -> AnnotatedFloatContext {
     if attr.eq_ignore_ascii_case("y") {
-        let mut annotated_ctx = AnnotatedFloatContext::empty();
-        for (pixel, annot) in ctx.iter_annotations() {
-            annotated_ctx.insert_with_annotation(pixel.clone(), annot.y as f64)
-        }
-        return annotated_ctx;
+        return AnnotatedFloatContext::from_iter_with_annotation(
+            ctx.iter_annotations(),
+            |(pixel, annot)| (pixel.clone(), annot.y as f64),
+        );
     } else if attr.eq_ignore_ascii_case("x") {
-        let mut annotated_ctx = AnnotatedFloatContext::empty();
-        for (pixel, annot) in ctx.iter_annotations() {
-            annotated_ctx.insert_with_annotation(pixel.clone(), annot.x as f64)
-        }
-        return annotated_ctx;
+        return AnnotatedFloatContext::from_iter_with_annotation(
+            ctx.iter_annotations(),
+            |(pixel, annot)| (pixel.clone(), annot.x as f64),
+        );
     }
     for (i, x) in ["r", "g", "b", "a"].iter().enumerate() {
         if attr.eq_ignore_ascii_case(x) {
-            let mut annotated_ctx = AnnotatedFloatContext::empty();
-            for (pixel, annot) in ctx.iter_annotations() {
-                annotated_ctx.insert_with_annotation(pixel.clone(), annot.c[i] as f64)
-            }
-            return annotated_ctx;
+            return AnnotatedFloatContext::from_iter_with_annotation(
+                ctx.iter_annotations(),
+                |(pixel, annot)| (pixel.clone(), annot.c[i] as f64),
+            );
         }
     }
     panic!("Unknown attribute: {:?}", attr)

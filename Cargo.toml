@@ -13,3 +13,4 @@ anyhow = "1.0"
 lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 regex = "1"
 image = "0.24.3"
+clap = "3.2.20"

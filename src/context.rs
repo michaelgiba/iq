@@ -34,16 +34,6 @@ pub type BasicContext = Context<()>;
 pub type AnnotatedFloatContext = Context<f64>;
 pub type AnnotatedPixelContext = Context<IqPixel>;
 
-pub trait Annotate<T> {
-    fn insert_with_annotation(&mut self, pixel: IqPixel, annotation: T);
-    fn get_annotation(&self, pixel: &IqPixel) -> Option<&T>;
-    fn iter_annotations(&self) -> std::collections::hash_map::Iter<IqPixel, T>;
-    fn without_annotations(&self) -> BasicContext;
-    fn first(&self) -> &T;
-    fn like<U>(ctx: &Context<U>, default: &T) -> Self;
-    fn fill(&self, default: &T) -> Self;
-}
-
 impl<T> Context<T> {
     pub fn empty() -> Self {
         Self {
@@ -180,43 +170,57 @@ impl<T> Context<T> {
     pub fn describe(&self) -> String {
         String::from("<details>")
     }
-}
 
-impl<T: Clone> Annotate<T> for Context<T> {
-    fn insert_with_annotation(&mut self, pixel: IqPixel, annotation: T) {
+    pub fn from_iter<I, P, F>(iter: P, f: F) -> Self
+    where
+        F: Fn(I) -> IqPixel,
+        P: IntoIterator<Item = I>,
+    {
+        let mut out = Self::empty();
+        for item in iter {
+            out.insert(f(item))
+        }
+        out
+    }
+
+    pub fn from_iter_with_annotation<I, P, F>(iter: P, f: F) -> Self
+    where
+        F: Fn(I) -> (IqPixel, T),
+        P: IntoIterator<Item = I>,
+    {
+        let mut out = Self::empty();
+        for item in iter {
+            let result = f(item);
+            out.insert_with_annotation(result.0, result.1)
+        }
+        out
+    }
+
+    pub fn insert_with_annotation(&mut self, pixel: IqPixel, annotation: T) {
         self.insert(pixel.clone());
         self.annotations.insert(pixel, annotation);
     }
 
-    fn get_annotation(&self, pixel: &IqPixel) -> Option<&T> {
+    pub fn get_annotation(&self, pixel: &IqPixel) -> Option<&T> {
         self.annotations.get(pixel)
     }
 
-    fn iter_annotations(&self) -> std::collections::hash_map::Iter<IqPixel, T> {
+    pub fn iter_annotations(&self) -> std::collections::hash_map::Iter<IqPixel, T> {
         self.annotations.iter()
     }
 
-    fn without_annotations(&self) -> BasicContext {
-        let mut new_ctx = BasicContext::empty();
-        for pixel in self.iter() {
-            new_ctx.insert(pixel.clone())
-        }
-        new_ctx
-    }
-
-    fn first(&self) -> &T {
+    pub fn first(&self) -> &T {
         self.iter_annotations().next().unwrap().1
     }
 
-    fn like<U>(ctx: &Context<U>, default: &T) -> Self {
+    pub fn like<U>(ctx: &Context<U>, default: &T) -> Self
+    where
+        T: Clone,
+    {
         let mut annotated_ctx = Self::empty();
         for pixel in ctx.iter() {
             annotated_ctx.insert_with_annotation(pixel.clone(), default.clone())
         }
         annotated_ctx
-    }
-
-    fn fill(&self, default: &T) -> Self {
-        Self::like(self, default)
     }
 }

@@ -15,17 +15,17 @@ fn assert_compatible_contexts<T>(a: &Context<T>, b: &Context<T>) {
 }
 
 fn min2(a: &AnnotatedFloatContext, b: &AnnotatedFloatContext) -> AnnotatedFloatContext {
-    let mut out = AnnotatedFloatContext::empty();
-    for (pixel, a_annot) in a.iter_annotations() {
+    AnnotatedFloatContext::from_iter_with_annotation(a.iter_annotations(), |(pixel, a_annot)| {
         let b_annot = b.get_annotation(pixel).unwrap();
-        let max = if a_annot < b_annot {
-            *a_annot
-        } else {
-            *b_annot
-        };
-        out.insert_with_annotation(pixel.clone(), max);
-    }
-    out
+        (
+            pixel.clone(),
+            if a_annot < b_annot {
+                *a_annot
+            } else {
+                *b_annot
+            },
+        )
+    })
 }
 
 pub fn min(args: &Vec<AnnotatedFloatContext>) -> AnnotatedFloatContext {
@@ -41,17 +41,18 @@ pub fn min(args: &Vec<AnnotatedFloatContext>) -> AnnotatedFloatContext {
 
 fn max2(a: &AnnotatedFloatContext, b: &AnnotatedFloatContext) -> AnnotatedFloatContext {
     assert_compatible_contexts(a, b);
-    let mut out = AnnotatedFloatContext::empty();
-    for (pixel, a_annot) in a.iter_annotations() {
+
+    AnnotatedFloatContext::from_iter_with_annotation(a.iter_annotations(), |(pixel, a_annot)| {
         let b_annot = b.get_annotation(pixel).unwrap();
-        let max = if a_annot > b_annot {
-            *a_annot
-        } else {
-            *b_annot
-        };
-        out.insert_with_annotation(pixel.clone(), max);
-    }
-    out
+        (
+            pixel.clone(),
+            if a_annot > b_annot {
+                *a_annot
+            } else {
+                *b_annot
+            },
+        )
+    })
 }
 
 pub fn max(args: &Vec<AnnotatedFloatContext>) -> AnnotatedFloatContext {
@@ -66,66 +67,49 @@ pub fn max(args: &Vec<AnnotatedFloatContext>) -> AnnotatedFloatContext {
 }
 
 pub fn square(arg: &AnnotatedFloatContext) -> AnnotatedFloatContext {
-    let mut out = AnnotatedFloatContext::empty();
-    for (pixel, annot) in arg.iter_annotations() {
-        out.insert_with_annotation(pixel.clone(), (*annot).powi(2));
-    }
-    out
+    AnnotatedFloatContext::from_iter_with_annotation(arg.iter_annotations(), |(pixel, annot)| {
+        (pixel.clone(), annot.powi(2))
+    })
 }
 
 pub fn sqrt(arg: &AnnotatedFloatContext) -> AnnotatedFloatContext {
-    let mut out = AnnotatedFloatContext::empty();
-    for (pixel, annot) in arg.iter_annotations() {
-        out.insert_with_annotation(pixel.clone(), (*annot).sqrt());
-    }
-    out
+    AnnotatedFloatContext::from_iter_with_annotation(arg.iter_annotations(), |(pixel, annot)| {
+        (pixel.clone(), annot.sqrt())
+    })
 }
 
 pub fn add(a: &AnnotatedFloatContext, b: &AnnotatedFloatContext) -> AnnotatedFloatContext {
     assert_compatible_contexts(a, b);
-    let mut out = AnnotatedFloatContext::empty();
-    for (pixel, a_annot) in a.iter_annotations() {
+    AnnotatedFloatContext::from_iter_with_annotation(a.iter_annotations(), |(pixel, a_annot)| {
         let b_annot = b.get_annotation(pixel).unwrap();
-        out.insert_with_annotation(pixel.clone(), a_annot + b_annot);
-    }
-    out
+        (pixel.clone(), a_annot + b_annot)
+    })
 }
 
 pub fn sub(l: &AnnotatedFloatContext, r: &AnnotatedFloatContext) -> AnnotatedFloatContext {
     assert_compatible_contexts(l, r);
-    let mut out = AnnotatedFloatContext::empty();
-    for (pixel, l_annot) in l.iter_annotations() {
+    AnnotatedFloatContext::from_iter_with_annotation(l.iter_annotations(), |(pixel, l_annot)| {
         let r_annot = r.get_annotation(pixel).unwrap();
-        // println!("{} {}", l_annot, r_annot);
-        out.insert_with_annotation(pixel.clone(), l_annot - r_annot);
-    }
-    out
+        (pixel.clone(), l_annot - r_annot)
+    })
 }
 
 pub fn div(l: &AnnotatedFloatContext, r: &AnnotatedFloatContext) -> AnnotatedFloatContext {
     assert_compatible_contexts(l, r);
-    let mut out = AnnotatedFloatContext::empty();
-    for (pixel, l_annot) in l.iter_annotations() {
+    AnnotatedFloatContext::from_iter_with_annotation(l.iter_annotations(), |(pixel, l_annot)| {
         let r_annot = r.get_annotation(pixel).unwrap();
-        out.insert_with_annotation(pixel.clone(), l_annot / r_annot);
-    }
-    out
+        (pixel.clone(), l_annot / r_annot)
+    })
 }
 
 pub fn mul(a: &AnnotatedFloatContext, b: &AnnotatedFloatContext) -> AnnotatedFloatContext {
     assert_compatible_contexts(a, b);
-    let mut out = AnnotatedFloatContext::empty();
-    for (pixel, a_annot) in a.iter_annotations() {
+    AnnotatedFloatContext::from_iter_with_annotation(a.iter_annotations(), |(pixel, a_annot)| {
         let b_annot = b.get_annotation(pixel).unwrap();
-        out.insert_with_annotation(pixel.clone(), a_annot * b_annot);
-    }
-    out
+        (pixel.clone(), a_annot * b_annot)
+    })
 }
 
 pub fn negate(arg: &BasicContext) -> BasicContext {
-    let mut out = BasicContext::empty();
-    for pixel in arg.iter() {
-        out.insert(pixel.negate());
-    }
-    out
+    BasicContext::from_iter(arg.iter(), |pixel| pixel.negate())
 }

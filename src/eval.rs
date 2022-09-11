@@ -1,8 +1,6 @@
 use crate::ast::*;
 use crate::attrs;
-use crate::context::{
-    Annotate, AnnotatedFloatContext, AnnotatedPixelContext, BasicContext, IqPixel,
-};
+use crate::context::{AnnotatedFloatContext, AnnotatedPixelContext, BasicContext, IqPixel};
 use crate::ops;
 
 pub trait Evalulate<T> {
@@ -11,8 +9,6 @@ pub trait Evalulate<T> {
 
 impl Evalulate<BasicContext> for IqAstRootNode {
     fn eval(&self, image_ctx: &BasicContext) -> BasicContext {
-        println!("{:?}", self);
-
         BasicContext::from_contexts(
             (*self.exprs)
                 .iter()
@@ -187,8 +183,8 @@ impl Evalulate<BasicContext> for MatchExprOpNode {
                 ) => {
                     let lhs_terms: AnnotatedFloatContext = lhs_scalar_expr.eval(image_ctx);
                     let rhs_terms: AnnotatedFloatContext = rhs_scalar_expr.eval(image_ctx);
-
                     let mut matched_ctx = BasicContext::empty();
+
                     for (point, annotation) in lhs_terms.iter_annotations() {
                         if match_compare(
                             &match_comparator.op_type,
@@ -198,6 +194,7 @@ impl Evalulate<BasicContext> for MatchExprOpNode {
                             matched_ctx.insert(point.clone());
                         }
                     }
+
                     matched_ctx
                 }
                 (
@@ -206,8 +203,8 @@ impl Evalulate<BasicContext> for MatchExprOpNode {
                 ) => {
                     let lhs_terms: AnnotatedPixelContext = lhs_pixel_expr.eval(image_ctx);
                     let rhs_terms: AnnotatedPixelContext = rhs_pixel_expr.eval(image_ctx);
-
                     let mut matched_ctx = BasicContext::empty();
+
                     for (point, annotation) in lhs_terms.iter_annotations() {
                         if match_compare(
                             &match_comparator.op_type,
@@ -231,13 +228,14 @@ impl Evalulate<BasicContext> for MatchExprOpNode {
 impl Evalulate<BasicContext> for MatchReturnValue {
     fn eval(&self, image_ctx: &BasicContext) -> BasicContext {
         match self {
-            MatchReturnValue::Pixel(pixel_expr) => {
-                let mut out = BasicContext::empty();
-                for (_, annot) in pixel_expr.eval(image_ctx).iter_annotations() {
-                    out.insert(annot.clone());
-                }
-                out
-            }
+            MatchReturnValue::Pixel(pixel_expr) => BasicContext::from_iter(
+                pixel_expr
+                    .eval(image_ctx)
+                    .iter_annotations()
+                    .map(|(_, annotation)| annotation)
+                    .cloned(),
+                |annotation| annotation,
+            ),
             MatchReturnValue::Operator(operator) => operator.eval(image_ctx),
         }
     }
@@ -248,11 +246,9 @@ impl Evalulate<AnnotatedPixelContext> for PixelExprType {
         match self {
             PixelExprType::Explicit(pixelexpr) => pixelexpr.eval(image_ctx),
             PixelExprType::CurrentPixel() => {
-                let mut annotated_ctx = AnnotatedPixelContext::empty();
-                for pixel in image_ctx.iter() {
-                    annotated_ctx.insert_with_annotation(pixel.clone(), pixel.clone())
-                }
-                annotated_ctx
+                AnnotatedPixelContext::from_iter_with_annotation(image_ctx.iter(), |point| {
+                    (point.clone(), point.clone())
+                })
             }
             PixelExprType::SelectorPixel(selector_ctx, attr) => {
                 attrs::access_pixel_ctx_attr(&selector_ctx.eval(image_ctx), &attr.key)
