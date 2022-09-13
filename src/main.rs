@@ -18,14 +18,14 @@ mod eval;
 mod ops;
 
 fn main() {
-    let matches = App::new("iq")
+    let matches = clap::command!("iq")
         .setting(AppSettings::AllowMissingPositional)
         .arg(
             Arg::with_name("blank")
                 .short('b')
                 .long("blank")
                 .takes_value(true)
-                .value_name("DIMENSIONS")
+                .value_name("dimensions")
                 .help("Use a blank canvas of provided size 'HxW' (ex. '100x300')"),
         )
         .arg(
