@@ -20,7 +20,7 @@ impl IqPixel {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Context<T> {
     min_y: u32,
     max_y: u32,
@@ -75,10 +75,14 @@ impl<T> Context<T> {
     }
 
     pub fn write(&self, path: &str) {
-        let mut img = RgbaImage::new(self.height() + 1, self.width() + 1);
+        let mut img = RgbaImage::new(self.max_y + 1, self.max_x + 1);
 
         for pixel in self.iter() {
-            img.put_pixel(pixel.x, pixel.y, image::Rgba(pixel.c))
+            img.put_pixel(
+                pixel.x - self.min_x,
+                pixel.y - self.min_y,
+                image::Rgba(pixel.c),
+            )
         }
 
         img.save(path).unwrap();
@@ -152,11 +156,18 @@ impl<T> Context<T> {
         selected_context
     }
 
-    pub fn midpoint(&self) -> (u32, u32) {
-        (
-            self.min_y + (self.max_y - self.min_y) / 2,
-            self.min_x + (self.max_x - self.min_x) / 2,
-        )
+    pub fn center(&self) -> IqPixel {
+        let y = self.min_y + (self.max_y - self.min_y) / 2;
+        let x = self.min_x + (self.max_x - self.min_x) / 2;
+        if let Some(p) = self.pixels.get(&(y, x)) {
+            p.clone()
+        } else {
+            IqPixel {
+                y: y,
+                x: x,
+                c: [255, 255, 255, 255],
+            }
+        }
     }
 
     pub fn x_bounds(&self) -> (u32, u32) {
@@ -203,6 +214,14 @@ impl<T> Context<T> {
 
     pub fn get_annotation(&self, pixel: &IqPixel) -> Option<&T> {
         self.annotations.get(pixel)
+    }
+
+    pub fn get_annotation_at_loc(&self, loc: (u32, u32)) -> Option<&T> {
+        if let Some(p) = self.pixels.get(&loc) {
+            self.get_annotation(p)
+        } else {
+            None
+        }
     }
 
     pub fn iter_annotations(&self) -> std::collections::hash_map::Iter<IqPixel, T> {

@@ -1,22 +1,5 @@
 use crate::context::*;
 
-pub fn access_pixel_ctx_attr<T>(ctx: &Context<T>, attr: &String) -> AnnotatedPixelContext {
-    if attr.eq_ignore_ascii_case("c") {
-        let midpoint = ctx.midpoint();
-
-        AnnotatedPixelContext::like(
-            ctx,
-            &IqPixel {
-                x: midpoint.0,
-                y: midpoint.1,
-                c: [255, 255, 255, 255],
-            },
-        )
-    } else {
-        panic!("Unknown attribute: {:?}", attr)
-    }
-}
-
 pub fn access_scalar_annotated_ctx_attr(
     ctx: &AnnotatedPixelContext,
     attr: &String,

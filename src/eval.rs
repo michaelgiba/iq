@@ -1,7 +1,8 @@
 use crate::ast::*;
 use crate::attrs;
 use crate::context::{AnnotatedFloatContext, AnnotatedPixelContext, BasicContext, IqPixel};
-use crate::ops;
+use crate::ctx_ops;
+use crate::float_ops;
 
 pub trait Evalulate<T> {
     fn eval(&self, image_ctx: &BasicContext) -> T;
@@ -106,10 +107,10 @@ impl Evalulate<AnnotatedFloatContext> for ScalarFnCall {
         let mut evaluated_args = (*self.args).iter().map(|arg| arg.eval(image_ctx));
 
         match &self.op {
-            ScalarFnOp::Min() => ops::min(&evaluated_args.collect()),
-            ScalarFnOp::Max() => ops::max(&evaluated_args.collect()),
-            ScalarFnOp::Square() => ops::square(&evaluated_args.next().unwrap()),
-            ScalarFnOp::Sqrt() => ops::sqrt(&evaluated_args.next().unwrap()),
+            ScalarFnOp::Min() => float_ops::min(&evaluated_args.collect()),
+            ScalarFnOp::Max() => float_ops::max(&evaluated_args.collect()),
+            ScalarFnOp::Square() => float_ops::square(&evaluated_args.next().unwrap()),
+            ScalarFnOp::Sqrt() => float_ops::sqrt(&evaluated_args.next().unwrap()),
         }
     }
 }
@@ -143,10 +144,10 @@ impl Evalulate<AnnotatedFloatContext> for BinaryScalarOpNode {
         let lhs = self.lhs.eval(image_ctx);
         let rhs = self.rhs.eval(image_ctx);
         match &self.op {
-            BinaryOpType::Add() => ops::add(&lhs, &rhs),
-            BinaryOpType::Sub() => ops::sub(&lhs, &rhs),
-            BinaryOpType::Div() => ops::div(&lhs, &rhs),
-            BinaryOpType::Mul() => ops::mul(&lhs, &rhs),
+            BinaryOpType::Add() => float_ops::add(&lhs, &rhs),
+            BinaryOpType::Sub() => float_ops::sub(&lhs, &rhs),
+            BinaryOpType::Div() => float_ops::div(&lhs, &rhs),
+            BinaryOpType::Mul() => float_ops::mul(&lhs, &rhs),
         }
     }
 }
@@ -154,7 +155,7 @@ impl Evalulate<AnnotatedFloatContext> for BinaryScalarOpNode {
 impl Evalulate<BasicContext> for OperatorNode {
     fn eval(&self, image_ctx: &BasicContext) -> BasicContext {
         match &self {
-            Self::UnaryNegationOp() => ops::negate(image_ctx),
+            Self::UnaryNegationOp() => float_ops::negate(image_ctx),
             Self::MatchExprOp(op) => op.eval(image_ctx),
         }
     }
@@ -250,8 +251,18 @@ impl Evalulate<AnnotatedPixelContext> for PixelExprType {
                     (point.clone(), point.clone())
                 })
             }
-            PixelExprType::SelectorPixel(selector_ctx, attr) => {
-                attrs::access_pixel_ctx_attr(&selector_ctx.eval(image_ctx), &attr.key)
+            PixelExprType::FnCall(pixel_fn_call) => pixel_fn_call.eval(image_ctx),
+        }
+    }
+}
+
+impl Evalulate<AnnotatedPixelContext> for PixelFnCall {
+    fn eval(&self, image_ctx: &BasicContext) -> AnnotatedPixelContext {
+        let mut evaluated_args = (*self.args).iter().map(|arg| arg.eval(image_ctx));
+        match self.op {
+            PixelFnOp::Center() => ctx_ops::center(image_ctx),
+            PixelFnOp::Neighbors(dy, dx) => {
+                ctx_ops::neighbors(image_ctx, &evaluated_args.next().unwrap(), dy, dx)
             }
         }
     }

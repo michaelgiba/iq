@@ -52,7 +52,7 @@ pub struct PixelNode {
 pub enum PixelExprType {
     Explicit(PixelNode),
     CurrentPixel(),
-    SelectorPixel(SelectorCtxNode, AttrAccessNode),
+    FnCall(PixelFnCall),
 }
 
 #[derive(Debug, Clone)]
@@ -99,6 +99,18 @@ pub enum ScalarFnOp {
     Max(),
     Square(),
     Sqrt(),
+}
+
+#[derive(Debug, Clone)]
+pub enum PixelFnOp {
+    Center(),
+    Neighbors(u64, u64),
+}
+
+#[derive(Debug, Clone)]
+pub struct PixelFnCall {
+    pub op: PixelFnOp,
+    pub args: Vec<PixelExprType>,
 }
 
 #[derive(Debug, Clone)]
