@@ -43,7 +43,7 @@ impl SliceRangeNode {
         Self::with_bounds(0, image_ctx.height().into())
     }
 
-    fn with_bounds(lower: u64, upper: u64) -> Self {
+    fn with_bounds(lower: i64, upper: i64) -> Self {
         SliceRangeNode {
             lower_bound: Some(ScalarExprNode::Scalar(ScalarNode::Integer(lower))),
             upper_bound: Some(ScalarExprNode::Scalar(ScalarNode::Integer(upper))),
@@ -262,8 +262,13 @@ impl Evalulate<AnnotatedPixelContext> for PixelFnCall {
         match self.op {
             PixelFnOp::Center() => ctx_ops::center(image_ctx),
             PixelFnOp::Neighbors(dy, dx) => {
-                ctx_ops::neighbors(image_ctx, &evaluated_args.next().unwrap(), dy, dx)
+                ctx_ops::neighbors(&evaluated_args.next().unwrap(), dy, dx)
             }
+            PixelFnOp::ColorScale(scale_factor) => {
+                ctx_ops::color_scale(&evaluated_args.next().unwrap(), scale_factor)
+            }
+            PixelFnOp::ColorAdd() => ctx_ops::color_add(&evaluated_args.collect()),
+            PixelFnOp::ColorNorm() => ctx_ops::color_norm(&evaluated_args.next().unwrap()),
         }
     }
 }
@@ -285,10 +290,10 @@ impl Evalulate<AnnotatedPixelContext> for PixelNode {
                     x: x_values.get_annotation(pixel).unwrap().round() as u32,
                     y: y_values.get_annotation(pixel).unwrap().round() as u32,
                     c: [
-                        r_values.get_annotation(pixel).unwrap().round() as u8,
-                        g_values.get_annotation(pixel).unwrap().round() as u8,
-                        b_values.get_annotation(pixel).unwrap().round() as u8,
-                        a_values.get_annotation(pixel).unwrap().round() as u8,
+                        r_values.get_annotation(pixel).unwrap().round() as i64,
+                        g_values.get_annotation(pixel).unwrap().round() as i64,
+                        b_values.get_annotation(pixel).unwrap().round() as i64,
+                        a_values.get_annotation(pixel).unwrap().round() as i64,
                     ],
                 },
             );

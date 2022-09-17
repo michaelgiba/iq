@@ -1,6 +1,6 @@
 use iq::context::BasicContext;
-use std::path::{Path,PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 fn test_file_path(rel_path: &str) -> PathBuf {
     let root = env!("CARGO_MANIFEST_DIR");
@@ -42,6 +42,16 @@ fn handles_identity() {
             BasicContext::blank(10, 10),
             test_file_contents("scripts/identity.iq")
         )
-    );    
+    );
 }
 
+#[test]
+fn handles_context_ops() {
+    assert_eq!(
+        BasicContext::blank_with_default(10, 10, [0, 0, 0, 255]),
+        iq::execute(
+            BasicContext::blank_with_default(10, 10, [255, 255, 255, 255]),
+            test_file_contents("scripts/color_scale.iq")
+        )
+    );
+}

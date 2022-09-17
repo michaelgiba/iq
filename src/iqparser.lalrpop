@@ -13,48 +13,48 @@ pub IqRoot: IqAstRootNode = {
 
 
 Expr: ExprNode = {
-    <SelectorCtx> => ExprNode { 
-        selector_ctx: Some(<>), 
-        op_nodes: vec!(), 
+    <SelectorCtx> => ExprNode {
+        selector_ctx: Some(<>),
+        op_nodes: vec!(),
     },
-    <Operator> => ExprNode { 
-        selector_ctx: None, 
-        op_nodes: vec!(<>), 
+    <Operator> => ExprNode {
+        selector_ctx: None,
+        op_nodes: vec!(<>),
     },
-    <s:SelectorCtx> <ops: ("|" <Operator>)+>  => ExprNode { 
-        selector_ctx: Some(s), 
-        op_nodes: ops, 
-    },    
-    <o:Operator> <ops: ("|" <Operator>)+>  => ExprNode { 
-        selector_ctx: None, 
-        op_nodes: vec!(o).into_iter().chain(ops.into_iter()).collect(), 
+    <s:SelectorCtx> <ops: ("|" <Operator>)+>  => ExprNode {
+        selector_ctx: Some(s),
+        op_nodes: ops,
+    },
+    <o:Operator> <ops: ("|" <Operator>)+>  => ExprNode {
+        selector_ctx: None,
+        op_nodes: vec!(o).into_iter().chain(ops.into_iter()).collect(),
     },
 };
 
 SelectorCtx: SelectorCtxNode = {
     "[" "]" => SelectorCtxNode { y_slice_range: None, x_slice_range: None },
-    "[" <l:SelectorSliceExpr> "]" => SelectorCtxNode { 
-        y_slice_range: Some(l), x_slice_range: None 
+    "[" <l:SelectorSliceExpr> "]" => SelectorCtxNode {
+        y_slice_range: Some(l), x_slice_range: None
     },
-    "[" <l:SelectorSliceExpr> "," <r:SelectorSliceExpr> "]" => SelectorCtxNode { 
-        y_slice_range: Some(l), x_slice_range: Some(r) 
-    },    
+    "[" <l:SelectorSliceExpr> "," <r:SelectorSliceExpr> "]" => SelectorCtxNode {
+        y_slice_range: Some(l), x_slice_range: Some(r)
+    },
 };
 
 SelectorSliceExpr: Box<SliceRangeNode> = {
-    ":" => Box::new(SliceRangeNode { 
+    ":" => Box::new(SliceRangeNode {
         lower_bound: None,
         upper_bound: None,
     }),
-    <ScalarExpr> ":" => Box::new(SliceRangeNode { 
+    <ScalarExpr> ":" => Box::new(SliceRangeNode {
         lower_bound: Some(<>),
         upper_bound: None,
     }),
-    ":" <ScalarExpr> => Box::new(SliceRangeNode { 
+    ":" <ScalarExpr> => Box::new(SliceRangeNode {
         lower_bound: None,
         upper_bound: Some(<>),
     }),
-    <l:ScalarExpr> ":" <r:ScalarExpr> => Box::new(SliceRangeNode { 
+    <l:ScalarExpr> ":" <r:ScalarExpr> => Box::new(SliceRangeNode {
         lower_bound: Some(l),
         upper_bound: Some(r),
     }),
@@ -76,16 +76,16 @@ MatchOperator: OperatorNode = {
     ),
     <v:MatchComparisonValue> <c:(<MatchComparator>)?> "=>" "(" <o:Operator> ")" => OperatorNode::MatchExprOp (
         MatchExprOpNode {
-            match_value: v,            
+            match_value: v,
             match_comparator_node: c,
             match_return_value_node: Box::new(MatchReturnValue::Operator(o)),
         }
-    ),    
+    ),
 }
 
 MatchComparator: MatchComparatorNode = {
     <o:MatchExprOp> <v:MatchComparisonValue> => MatchComparatorNode {
-        op_type: o, 
+        op_type: o,
         cmp_val: v,
     },
 }
@@ -106,13 +106,13 @@ MatchExprOp: MatchOpType = {
 
 
 ExplicitPixel: PixelNode = {
-    "p(" 
-        <y:ScalarExpr> "," 
-        <x:ScalarExpr> "," 
-        <r:ScalarExpr> "," 
-        <g:ScalarExpr> "," 
-        <b:ScalarExpr> 
-        <a:("," <ScalarExpr>)?> 
+    "p("
+        <y:ScalarExpr> ","
+        <x:ScalarExpr> ","
+        <r:ScalarExpr> ","
+        <g:ScalarExpr> ","
+        <b:ScalarExpr>
+        <a:("," <ScalarExpr>)?>
     ")" => PixelNode{
         y_expr: y,
         x_expr: x,
@@ -134,13 +134,25 @@ PixelExpr: PixelExprType = {
 }
 
 PixelFnCall: PixelFnCall = {
-    "center()" => PixelFnCall { 
+    "center()" => PixelFnCall {
         op: PixelFnOp::Center(),
         args: vec!(),
     },
-    "n(" <p:PixelExpr> "," <dy:Integer> "," <dx:Integer> ")" => PixelFnCall { 
+    "neighbors(" <p:PixelExpr> "," <dy:Integer> "," <dx:Integer> ")" => PixelFnCall {
         op: PixelFnOp::Neighbors(dy, dx),
         args: vec!(p),
+    },
+    "color_scale("  <p:PixelExpr> "," <f:Float> ")" => PixelFnCall {
+        op: PixelFnOp::ColorScale(f),
+        args: vec!(p),
+    },
+    "color_add(" <expr:PixelExpr>  <exprs: ("," <PixelExpr>)+> ")" => PixelFnCall {
+        op: PixelFnOp::ColorAdd(),
+        args: vec!(expr).into_iter().chain(exprs.into_iter()).collect(),
+    },
+    "color_norm(" <expr:PixelExpr> ")" => PixelFnCall {
+        op: PixelFnOp::ColorNorm(),
+        args: vec!(expr),
     },    
 }
 
@@ -162,8 +174,8 @@ ScalarExpr: ScalarExprNode = {
                 rhs: r,
             }
         )
-    ),   
-    ScalarExprFactor, 
+    ),
+    ScalarExprFactor,
 }
 
 ScalarExprFactor: ScalarExprNode = {
@@ -184,7 +196,7 @@ ScalarExprFactor: ScalarExprNode = {
                 rhs: r,
             }
         )
-    ),    
+    ),
     ScalarExprTerm,
 }
 
@@ -195,27 +207,27 @@ ScalarExprTerm: ScalarExprNode = {
     <p:PixelExpr> "." <s:AttrAccess> => ScalarExprNode::Scalar(
         ScalarNode::PixelScalar(Box::new(p), s)
     ),
-    <ScalarFnCall> => ScalarExprNode::ScalarFn(<>), 
+    <ScalarFnCall> => ScalarExprNode::ScalarFn(<>),
     "(" <ScalarExpr> ")",
 }
 
 ScalarFnCall: ScalarFnCall = {
-    "min(" <l:ScalarExpr> "," <r:ScalarExpr> ")" => ScalarFnCall { 
+    "min(" <l:ScalarExpr> "," <r:ScalarExpr> ")" => ScalarFnCall {
         op: ScalarFnOp::Min(),
         args: vec!(l, r),
     },
-    "max(" <l:ScalarExpr> "," <r:ScalarExpr> ")" => ScalarFnCall { 
+    "max(" <l:ScalarExpr> "," <r:ScalarExpr> ")" => ScalarFnCall {
         op: ScalarFnOp::Max(),
         args: vec!(l, r),
     },
-    "sq(" <ScalarExpr> ")" => ScalarFnCall { 
+    "sq(" <ScalarExpr> ")" => ScalarFnCall {
         op: ScalarFnOp::Square(),
         args: vec!(<>),
     },
-    "sqrt(" <ScalarExpr> ")" => ScalarFnCall { 
+    "sqrt(" <ScalarExpr> ")" => ScalarFnCall {
         op: ScalarFnOp::Sqrt(),
         args: vec!(<>),
-    },      
+    },
 }
 
 
@@ -229,7 +241,7 @@ SelectorScalar: ScalarNode = {
 }
 
 AttrAccess: AttrAccessNode = {
-    r"[a-z]+" => AttrAccessNode { key : String::from(<>) },    
+    r"[a-z]+" => AttrAccessNode { key : String::from(<>) },
 }
 
 ScalarNode: ScalarNode = {
@@ -238,10 +250,10 @@ ScalarNode: ScalarNode = {
 }
 
 Float: f64 = {
-    r"[0-9]+\.[0-9]+" => f64::from_str(<>).unwrap(),
+    r"(-)?[0-9]+\.[0-9]+" => f64::from_str(<>).unwrap(),
 }
 
-Integer: u64 = {
-    r"[0-9]+" => u64::from_str(<>).unwrap(),
+Integer: i64 = {
+    r"(-)?[0-9]+" => i64::from_str(<>).unwrap(),
 };
 

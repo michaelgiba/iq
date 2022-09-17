@@ -15,7 +15,7 @@ pub struct SelectorScalarNode {
 #[derive(Debug, Clone)]
 pub enum ScalarNode {
     Float(f64),
-    Integer(u64),
+    Integer(i64),
     SelectorScalar(SelectorScalarNode),
     PixelScalar(Box<PixelExprType>, AttrAccessNode),
 }
@@ -104,7 +104,10 @@ pub enum ScalarFnOp {
 #[derive(Debug, Clone)]
 pub enum PixelFnOp {
     Center(),
-    Neighbors(u64, u64),
+    Neighbors(i64, i64),
+    ColorScale(f64),
+    ColorAdd(),
+    ColorNorm(),
 }
 
 #[derive(Debug, Clone)]

@@ -7,7 +7,7 @@ use std::path::Path;
 pub struct IqPixel {
     pub x: u32,
     pub y: u32,
-    pub c: [u8; 4],
+    pub c: [i64; 4],
 }
 
 impl IqPixel {
@@ -46,18 +46,18 @@ impl<T> Context<T> {
         }
     }
 
-    pub fn blank(h: u32, w: u32) -> Self {
+    pub fn blank_with_default(h: u32, w: u32, c: [i64; 4]) -> Self {
         let mut ctx = Self::empty();
         for y in 0..h {
             for x in 0..w {
-                ctx.insert(IqPixel {
-                    y,
-                    x,
-                    c: [255, 255, 255, 255],
-                });
+                ctx.insert(IqPixel { y, x, c: c });
             }
         }
         ctx
+    }
+
+    pub fn blank(h: u32, w: u32) -> Self {
+        Self::blank_with_default(h, w, [255, 255, 255, 255])
     }
 
     pub fn from_contexts(contexts: Vec<Self>) -> Self {
@@ -78,10 +78,14 @@ impl<T> Context<T> {
         let mut img = RgbaImage::new(self.max_y + 1, self.max_x + 1);
 
         for pixel in self.iter() {
+            println!("{:?}", pixel.c);
+
             img.put_pixel(
                 pixel.x - self.min_x,
                 pixel.y - self.min_y,
-                image::Rgba(pixel.c),
+                image::Rgba([
+                    pixel.c[0]as u8,pixel.c[1]as u8,pixel.c[2]as u8,pixel.c[3]as u8
+                ]),
             )
         }
 
@@ -96,7 +100,7 @@ impl<T> Context<T> {
             out.insert(IqPixel {
                 y,
                 x,
-                c: [c[0], c[1], c[2], c[3]],
+                c: [c[0] as i64, c[1] as i64, c[2] as i64, c[3] as i64],
             })
         }
 
@@ -179,7 +183,11 @@ impl<T> Context<T> {
     }
 
     pub fn describe(&self) -> String {
-        String::from("<details>")
+        String::from(format!(
+            "<Context x_bounds={:?} y_bounds={:?}>",
+            self.x_bounds(),
+            self.y_bounds()
+        ))
     }
 
     pub fn from_iter<I, P, F>(iter: P, f: F) -> Self
@@ -221,6 +229,12 @@ impl<T> Context<T> {
             self.get_annotation(p)
         } else {
             None
+        }
+    }
+
+    pub fn update_annot_at_loc(&mut self, loc: (u32, u32), annot: T) {
+        if let Some(p) = self.pixels.get(&loc) {
+            self.annotations.insert(p.clone(), annot);
         }
     }
 

@@ -1,0 +1,8 @@
+_ => color_norm(color_add(
+    color_scale(neighbors(_, -1, -1), -1.0),
+    color_scale(neighbors(_,  0, -1), -2.0),
+    color_scale(neighbors(_,  1, -1), -1.0),
+    color_scale(neighbors(_,  1, -1), 1.0),
+    color_scale(neighbors(_,  1,  0), 2.0),
+    color_scale(neighbors(_,  1,  1), 1.0)
+))
