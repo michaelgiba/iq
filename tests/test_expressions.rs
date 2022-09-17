@@ -1,4 +1,15 @@
 use iq::context::BasicContext;
+use std::path::{Path,PathBuf};
+use std::fs;
+
+fn test_file_path(rel_path: &str) -> PathBuf {
+    let root = env!("CARGO_MANIFEST_DIR");
+    Path::new(root).join("tests/test_files").join(rel_path)
+}
+
+fn test_file_contents(rel_path: &str) -> String {
+    fs::read_to_string(test_file_path(rel_path)).unwrap()
+}
 
 #[test]
 fn handles_empty_input() {
@@ -25,4 +36,12 @@ fn handles_identity() {
             String::from("_ => p(_.y, _.x, _.r, _.g, _.b)")
         )
     );
+    assert_eq!(
+        BasicContext::blank(10, 10),
+        iq::execute(
+            BasicContext::blank(10, 10),
+            test_file_contents("scripts/identity.iq")
+        )
+    );    
 }
+
