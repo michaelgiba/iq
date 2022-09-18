@@ -92,8 +92,8 @@ iq -e "_.g > 128 => p(_.y, _.x, 255, 255, 255) : _" \
 # Crop out a circle and replace the outside with a gradient
 iq -e "
     ([].w/2) >= sqrt(sq(_.x - center().x) + sq(_.y - center().y)) =>
-        _ :
-        p(_.y, _.x, 0, (_.g * _.x) / [].w, 0)
+        p(_.y, _.x, _.r, 255 - _.r, _.r) :
+        p(_.y, _.x, (_.r * _.y) / [].h, (_.g * _.x) / [].w, 0)
 " \
     assets/examples/dalle_philip_seymour_in_cars_movie.jpg \
     circle_seymour.jpg
