@@ -11,7 +11,7 @@
 <h3 align="center">iq - a little tool for image manipulation</h3>
 
   <p align="center">
-    Inspired by `jq`, iq is an experimental tool for manipulating images.
+    Inspired by `jq`, iq is an experimental tool for manipulating images through expressions which transform pixels.
   </p>
 </div>
 
