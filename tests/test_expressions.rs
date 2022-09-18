@@ -54,4 +54,12 @@ fn handles_context_ops() {
             test_file_contents("scripts/color_scale.iq")
         )
     );
+
+    // Just to check sobel doesn't crash.
+    let output_ctx = iq::execute(
+        BasicContext::blank_with_default(10, 10, [255, 255, 255, 255]),
+        test_file_contents("scripts/sobel_edge_detection.iq"),
+    );
+
+    assert_eq!(output_ctx.clone(), output_ctx);
 }

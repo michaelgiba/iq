@@ -78,6 +78,7 @@ pub struct MatchExprOpNode {
     pub match_value: MatchComparisonValue,
     pub match_comparator_node: Option<MatchComparatorNode>,
     pub match_return_value_node: Box<MatchReturnValue>,
+    pub else_return_value_node: Option<Box<MatchReturnValue>>,
 }
 
 #[derive(Debug, Clone)]
@@ -108,6 +109,7 @@ pub enum PixelFnOp {
     ColorScale(f64),
     ColorAdd(),
     ColorNorm(),
+    AlphaBlend(f64),
 }
 
 #[derive(Debug, Clone)]

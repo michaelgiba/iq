@@ -78,13 +78,14 @@ impl<T> Context<T> {
         let mut img = RgbaImage::new(self.max_y + 1, self.max_x + 1);
 
         for pixel in self.iter() {
-            println!("{:?}", pixel.c);
-
             img.put_pixel(
                 pixel.x - self.min_x,
                 pixel.y - self.min_y,
                 image::Rgba([
-                    pixel.c[0]as u8,pixel.c[1]as u8,pixel.c[2]as u8,pixel.c[3]as u8
+                    pixel.c[0] as u8,
+                    pixel.c[1] as u8,
+                    pixel.c[2] as u8,
+                    pixel.c[3] as u8,
                 ]),
             )
         }

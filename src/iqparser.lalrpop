@@ -67,20 +67,19 @@ Operator: OperatorNode = {
 };
 
 MatchOperator: OperatorNode = {
-    <v:MatchComparisonValue> <c:(<MatchComparator>)?> "=>" <pixel:PixelExpr> => OperatorNode::MatchExprOp (
+    <v:MatchComparisonValue> <c:(<MatchComparator>)?> "=>" <rval:MatchReturnValue> <other:(":" <MatchReturnValue>)?> => OperatorNode::MatchExprOp (
         MatchExprOpNode {
             match_value: v,
             match_comparator_node: c,
-            match_return_value_node: Box::new(MatchReturnValue::Pixel(pixel)),
+            match_return_value_node: rval,
+            else_return_value_node: other,
         }
     ),
-    <v:MatchComparisonValue> <c:(<MatchComparator>)?> "=>" "(" <o:Operator> ")" => OperatorNode::MatchExprOp (
-        MatchExprOpNode {
-            match_value: v,
-            match_comparator_node: c,
-            match_return_value_node: Box::new(MatchReturnValue::Operator(o)),
-        }
-    ),
+}
+
+MatchReturnValue: Box<MatchReturnValue> = {
+    <PixelExpr> => Box::new(MatchReturnValue::Pixel(<>)),
+    "(" <Operator> ")" => Box::new(MatchReturnValue::Operator(<>)),
 }
 
 MatchComparator: MatchComparatorNode = {
@@ -153,7 +152,11 @@ PixelFnCall: PixelFnCall = {
     "color_norm(" <expr:PixelExpr> ")" => PixelFnCall {
         op: PixelFnOp::ColorNorm(),
         args: vec!(expr),
-    },    
+    },
+    "alpha_blend(" <expr:PixelExpr>  "," <f:Float> ")" => PixelFnCall {
+        op: PixelFnOp::AlphaBlend(f),
+        args: vec!(expr),
+    },
 }
 
 ScalarExpr: ScalarExprNode = {

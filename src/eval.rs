@@ -175,8 +175,8 @@ fn match_compare<T: PartialEq + PartialOrd>(op_type: &MatchOpType, lhs: T, rhs: 
 impl Evalulate<BasicContext> for MatchExprOpNode {
     fn eval(&self, image_ctx: &BasicContext) -> BasicContext {
         let match_comp_lhs = &self.match_value;
-        let matched_ctx: BasicContext = match &self.match_comparator_node {
-            None => image_ctx.clone(),
+        let (matched_ctx, else_context) = match &self.match_comparator_node {
+            None => (image_ctx.clone(), BasicContext::empty()),
             Some(match_comparator) => match (match_comp_lhs, &match_comparator.cmp_val) {
                 (
                     MatchComparisonValue::Scalar(lhs_scalar_expr),
@@ -185,6 +185,7 @@ impl Evalulate<BasicContext> for MatchExprOpNode {
                     let lhs_terms: AnnotatedFloatContext = lhs_scalar_expr.eval(image_ctx);
                     let rhs_terms: AnnotatedFloatContext = rhs_scalar_expr.eval(image_ctx);
                     let mut matched_ctx = BasicContext::empty();
+                    let mut else_context = BasicContext::empty();
 
                     for (point, annotation) in lhs_terms.iter_annotations() {
                         if match_compare(
@@ -193,10 +194,12 @@ impl Evalulate<BasicContext> for MatchExprOpNode {
                             rhs_terms.get_annotation(point).unwrap(),
                         ) {
                             matched_ctx.insert(point.clone());
+                        } else {
+                            else_context.insert(point.clone());
                         }
                     }
 
-                    matched_ctx
+                    (matched_ctx, else_context)
                 }
                 (
                     MatchComparisonValue::Pixel(lhs_pixel_expr),
@@ -205,6 +208,7 @@ impl Evalulate<BasicContext> for MatchExprOpNode {
                     let lhs_terms: AnnotatedPixelContext = lhs_pixel_expr.eval(image_ctx);
                     let rhs_terms: AnnotatedPixelContext = rhs_pixel_expr.eval(image_ctx);
                     let mut matched_ctx = BasicContext::empty();
+                    let mut else_context = BasicContext::empty();
 
                     for (point, annotation) in lhs_terms.iter_annotations() {
                         if match_compare(
@@ -213,16 +217,23 @@ impl Evalulate<BasicContext> for MatchExprOpNode {
                             rhs_terms.get_annotation(point).unwrap(),
                         ) {
                             matched_ctx.insert(annotation.clone());
+                        } else {
+                            else_context.insert(annotation.clone());
                         }
                     }
-                    matched_ctx
+
+                    (matched_ctx, else_context)
                 }
                 _ => panic!("match terms have incompatible types"),
             },
         };
-        self.match_return_value_node
-            .eval(image_ctx)
-            .select(matched_ctx)
+        let matched_outputs = self.match_return_value_node.eval(&matched_ctx);
+
+        if let Some(else_block) = &self.else_return_value_node {
+            BasicContext::from_contexts(vec![matched_outputs, else_block.eval(&else_context)])
+        } else {
+            matched_outputs
+        }
     }
 }
 
@@ -269,6 +280,9 @@ impl Evalulate<AnnotatedPixelContext> for PixelFnCall {
             }
             PixelFnOp::ColorAdd() => ctx_ops::color_add(&evaluated_args.collect()),
             PixelFnOp::ColorNorm() => ctx_ops::color_norm(&evaluated_args.next().unwrap()),
+            PixelFnOp::AlphaBlend(blend) => {
+                ctx_ops::alpha_blend(&evaluated_args.next().unwrap(), blend)
+            }
         }
     }
 }

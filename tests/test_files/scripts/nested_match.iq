@@ -1,0 +1,7 @@
+50 >= sqrt(sq(_.x - center().x) + sq(_.y - center().y)) => 
+    (
+        25 >= sqrt(sq(_.x - center().x) + sq(_.y - center().y)) =>
+            p(_.y, _.x, 255, 0, 0) :
+            p(_.y, _.x, 255, 255, 255)
+    ) : p(_.y, _.x, 0, 0, 255) | _ => alpha_blend(_, 0.5);
+_ => alpha_blend(_, 0.5);
