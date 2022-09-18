@@ -10,7 +10,7 @@ pub trait Evalulate<T> {
 
 impl Evalulate<BasicContext> for IqAstRootNode {
     fn eval(&self, image_ctx: &BasicContext) -> BasicContext {
-        BasicContext::from_contexts(
+        BasicContext::alpha_composite(
             (*self.exprs)
                 .iter()
                 .map(|expr| expr.eval(image_ctx))

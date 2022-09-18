@@ -18,6 +18,34 @@ impl IqPixel {
             c: [!self.c[0], !self.c[1], !self.c[2], !self.c[3]],
         }
     }
+
+    pub fn alpha_composite(&self, other: &Self) -> Self {
+        let ca = [
+            self.c[0] as f64,
+            self.c[1] as f64,
+            self.c[2] as f64,
+            self.c[3] as f64,
+        ];
+        let cb = [
+            other.c[0] as f64,
+            other.c[1] as f64,
+            other.c[2] as f64,
+            other.c[3] as f64,
+        ];
+        let alpha_a = ca[3] / 255.0;
+        let alpha_b = cb[3] / 255.0;
+        let cout = [
+            (ca[0] * alpha_a + cb[0] * alpha_b * (1.0 - alpha_a)) as i64,
+            (ca[1] * alpha_a + cb[1] * alpha_b * (1.0 - alpha_a)) as i64,
+            (ca[2] * alpha_a + cb[2] * alpha_b * (1.0 - alpha_a)) as i64,
+            255,
+        ];
+        IqPixel {
+            y: self.y,
+            x: self.x,
+            c: cout,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -50,7 +78,7 @@ impl<T> Context<T> {
         let mut ctx = Self::empty();
         for y in 0..h {
             for x in 0..w {
-                ctx.insert(IqPixel { y, x, c: c });
+                ctx.insert(IqPixel { y, x, c });
             }
         }
         ctx
@@ -68,6 +96,24 @@ impl<T> Context<T> {
             for ctx in contexts {
                 for pixel in ctx.iter() {
                     out.insert(pixel.clone())
+                }
+            }
+            out
+        }
+    }
+
+    pub fn alpha_composite(contexts: Vec<Self>) -> Self {
+        if contexts.is_empty() {
+            Self::empty()
+        } else {
+            let mut out = Self::empty();
+            for ctx in contexts {
+                for pixel in ctx.iter() {
+                    if let Some(under_pixel) = out.pixels.get(&(pixel.y, pixel.x)) {
+                        out.insert(under_pixel.alpha_composite(pixel))
+                    } else {
+                        out.insert(pixel.clone())
+                    }
                 }
             }
             out
@@ -168,8 +214,8 @@ impl<T> Context<T> {
             p.clone()
         } else {
             IqPixel {
-                y: y,
-                x: x,
+                y,
+                x,
                 c: [255, 255, 255, 255],
             }
         }
@@ -184,11 +230,11 @@ impl<T> Context<T> {
     }
 
     pub fn describe(&self) -> String {
-        String::from(format!(
+        format!(
             "<Context x_bounds={:?} y_bounds={:?}>",
             self.x_bounds(),
             self.y_bounds()
-        ))
+        )
     }
 
     pub fn from_iter<I, P, F>(iter: P, f: F) -> Self

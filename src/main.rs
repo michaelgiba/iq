@@ -34,6 +34,10 @@ fn main() {
 
     let input_context = match matches.value_of("blank") {
         Some(blank_dimensions_string) => {
+            if matches.value_of("input_path").is_none() {
+                panic!("Either 'blank' OR an input path should be provided. Not both.")
+            }
+
             let re = Regex::new(r"(\d+)x(\d+)").unwrap();
             let captures = re
                 .captures(blank_dimensions_string)
