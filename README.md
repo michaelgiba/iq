@@ -53,6 +53,7 @@ Would produce an output image `out.jpg` with the green and blue color channels r
 <img src="assets/examples/ex1_dalle_red.jpg" alt="Logo" width="120" height="120">
 </a>
 
+### Slice Ranges
 
 Expressions can do much more complex actions than simply uniformly changing colors. For example given this DALLE generated image of Philip Seymour Hoffman in the Disney film "Cars":
 
@@ -60,7 +61,6 @@ Expressions can do much more complex actions than simply uniformly changing colo
 <img src="assets/examples/dalle_philip_seymour_in_cars_movie.jpg" alt="Logo" width="120" height="120">
 </a>
 
-### Slice Ranges
 We can crop patches of the image using "slice ranges":
 
 ```
@@ -130,12 +130,13 @@ iq -e "
 ### Pixel Functions
 
 There are a few builtin pixel functions like:
+- `color_norm`
 - `color_add`
 - `color_scale`
 - `neighbors`
 
-That when combined with other standard features do even do some convolutions like this sobel edge
-detection ranch:
+That when combined with other standard features can even do some convolutions like this <a href="https://en.wikipedia.org/wiki/Sobel_operator"> sobel edge
+detection</a>:
 
 ```
 # Crop into a circle and do sobel edge detection
