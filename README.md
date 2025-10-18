@@ -64,7 +64,7 @@ Expressions can do much more complex actions than simply uniformly changing colo
 We can crop patches of the image using "slice ranges":
 
 ```
-# Crop out a circle and replace the outside with a gradient
+# Crop a 100x100 rectangular region from the top-left corner
 iq -e "[0:100, 0:100]" \
     assets/examples/dalle_philip_seymour_in_cars_movie.jpg \
     cropped_seymour.jpg
@@ -154,7 +154,7 @@ iq -e "
     circle_edge_ranch.jpg
 ```
 <a href="https://github.com/michaelgiba/iq">
-<img src="assets/examples/ex4_circle_edge_range.jpg" alt="Logo" width="120" height="120">
+<img src="assets/examples/ex4_circle_edge_ranch.jpg" alt="Logo" width="120" height="120">
 </a>
 
 
